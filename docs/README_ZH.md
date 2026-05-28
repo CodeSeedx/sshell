@@ -3,16 +3,16 @@ sshell
 
 [![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Release](https://img.shields.io/github/v/release/xiatianxuan/sshell)](https://github.com/xiatianxuan/sshell/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/xiatianxuan/sshell)](https://goreportcard.com/report/github.com/xiatianxuan/sshell)
-[![Build](https://img.shields.io/github/actions/workflow/status/xiatianxuan/sshell/ci.yml?label=CI)](https://github.com/xiatianxuan/sshell/actions)
+[![GitHub Release](https://img.shields.io/github/v/release/CodeSeedx/sshell)](https://github.com/CodeSeedx/sshell/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/CodeSeedx/sshell)](https://goreportcard.com/report/github.com/CodeSeedx/sshell)
+[![Build](https://img.shields.io/github/actions/workflow/status/CodeSeedx/sshell/ci.yml?label=CI)](https://github.com/CodeSeedx/sshell/actions)
 
 轻量级 SSH 客户端，Go 语言编写，单文件输出，无外部运行时依赖。
 
 下载
 ----
 
-从 [GitHub Releases](https://github.com/xiatianxuan/sshell/releases) 下载对应平台的二进制文件：
+从 [GitHub Releases](https://github.com/CodeSeedx/sshell/releases) 下载对应平台的二进制文件：
 
 - sshell-linux-amd64   — Linux x86_64
 - sshell-linux-arm64   — Linux ARM64
