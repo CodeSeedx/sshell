@@ -7,12 +7,14 @@ sshell
 [![Go Report Card](https://goreportcard.com/badge/github.com/xiatianxuan/sshell)](https://goreportcard.com/report/github.com/xiatianxuan/sshell)
 [![Build](https://img.shields.io/github/actions/workflow/status/xiatianxuan/sshell/ci.yml?label=CI)](https://github.com/xiatianxuan/sshell/actions)
 
-轻量级 SSH 客户端，Go 语言编写，单文件输出，无外部运行时依赖。
+[中文文档](docs/README_ZH.md)
 
-下载
-----
+A lightweight SSH client written in Go. Single binary, no external runtime dependencies.
 
-从 [GitHub Releases](https://github.com/xiatianxuan/sshell/releases) 下载对应平台的二进制文件：
+Download
+--------
+
+Download the binary for your platform from [GitHub Releases](https://github.com/xiatianxuan/sshell/releases):
 
 - sshell-linux-amd64   — Linux x86_64
 - sshell-linux-arm64   — Linux ARM64
@@ -20,68 +22,73 @@ sshell
 - sshell-darwin-arm64  — macOS Apple Silicon
 - sshell-windows-amd64.exe — Windows
 
-编译
-----
+Build
+-----
 
-    make build          # 编译当前平台
-    make build-all      # 编译全部 5 个平台
+    make build          # Build for current platform
+    make build-all      # Build for all 5 platforms
 
-用法
-----
+Usage
+-----
 
     sshell -u <user> <host> [options]
 
-    sshell -u root 192.168.1.100          # 用 root 登录，密钥自动探测
-    sshell -u root -p 2222 192.168.1.100  # 指定端口
-    sshell -u root -a ./id_rsa myhost     # 指定密钥文件
-    sshell -u root -a mypassword myhost   # 直接传密码
-    sshell -u root -v 192.168.1.100       # 详细输出
-    sshell -V                             # 查看版本
+    sshell -u root 192.168.1.100          # Login as root, auto-detect keys
+    sshell -u root -p 2222 192.168.1.100  # Specify port
+    sshell -u root -a ./id_rsa myhost     # Specify key file
+    sshell -u root -a mypassword myhost   # Pass password directly
+    sshell -u root -v 192.168.1.100       # Verbose output
+    sshell -V                             # Show version
 
-选项
-----
+Options
+-------
 
-    -p <port>     SSH 端口，默认 22
-    -u <user>     SSH 用户名，必填
-    -a <auth>     认证方式：密码或私钥文件路径
-    -k <seconds>  TCP Keep-Alive 间隔，默认 30 秒
-    -v            详细输出
-    -V            查看版本
-    -h, --help    帮助
+    -p <port>     SSH port, default 22
+    -u <user>     SSH username (required)
+    -a <auth>     Authentication: password or private key path
+    -k <seconds>  TCP Keep-Alive interval, default 30s
+    -v            Verbose output
+    -V            Show version
+    -h, --help    Show help
 
-功能
-----
+Features
+--------
 
-- SSH 连接：TCP 连接 + SSH 握手 + Keep-Alive
-- 交互终端：PTY 模式，支持窗口缩放
-- 密钥认证：自动探测 ~/.ssh/ 下的密钥文件
-- 密码认证：自动提示输入密码，支持带密码的密钥
-- 主机校验：读取 ~/.ssh/known_hosts，首次连接自动接受并提示
-- 信号处理：Ctrl+C 正确转发，SIGWINCH 动态调整终端大小
-- 空闲检测：30 分钟无活动自动退出
+- SSH connection: TCP connect + SSH handshake + Keep-Alive
+- Interactive terminal: PTY mode with window resize support
+- Key authentication: Auto-detect keys in ~/.ssh/
+- Password authentication: Auto-prompt for password, supports encrypted keys
+- Host verification: Reads ~/.ssh/known_hosts, auto-accept on first connect
+- Signal handling: Ctrl+C forwarding, SIGWINCH dynamic terminal resize
+- Idle timeout: Auto-exit after 30 minutes of inactivity
 
-架构
-----
+Architecture
+------------
 
-    main.go      入口
-    args.go      参数解析
-    auth.go      认证逻辑
-    connect.go   SSH 连接
-    shell.go     交互终端
-    version.go   版本号（编译时注入）
+    main.go      Entry point
+    args.go      Argument parsing
+    auth.go      Authentication logic
+    connect.go   SSH connection
+    shell.go     Interactive terminal
+    version.go   Version (injected at build time)
 
-发版流程
-----
+Release
+-------
 
-向 main 分支推送 tag 即可自动发布：
+Push a tag to main to trigger automatic release:
 
     git tag v1.0.0
     git push origin v1.0.0
 
-GitHub Actions 会自动构建 5 个平台的二进制文件并发布到 Release。
+GitHub Actions will automatically build binaries for all 5 platforms and publish to Release.
 
-依赖
-----
+Dependencies
+------------
 
     golang.org/x/crypto
     golang.org/x/term
+
+License
+-------
+
+MIT
