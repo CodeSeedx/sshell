@@ -28,14 +28,36 @@ func parseArgs() args {
 }
 
 func parseArgsVerbose() (args, error) {
+	c := loadConfig()
 	a, err := parseArgsFrom(os.Args[1:])
 	if err != nil {
 		return a, err
+	}
+	applyConfig(&a, c)
+	// 应用配置后，重新检查必填参数
+	if a.host == "" || a.user == "" {
+		return a, fmt.Errorf("Usage: sshell -u <user> <host> [options]")
+	}
+	return a, nil
+}
+
+// parseArgsWithConfig 解析参数并应用配置文件
+func parseArgsWithConfig(argv []string) (args, error) {
+	c := loadConfig()
+	a, err := parseArgsFrom(argv)
+	if err != nil {
+		return a, err
+	}
+	applyConfig(&a, c)
+	// 应用配置后，重新检查必填参数
+	if a.host == "" || a.user == "" {
+		return a, fmt.Errorf("Usage: sshell -u <user> <host> [options]")
 	}
 	return a, nil
 }
 
 // parseArgsFrom 解析参数，出错返回 error 而不是退出，便于测试
+// 注意：默认值在这里不设置，由 applyConfig 处理
 func parseArgsFrom(argv []string) (args, error) {
 	var a args
 	for i := 0; i < len(argv); i++ {
@@ -81,16 +103,9 @@ func parseArgsFrom(argv []string) (args, error) {
 		}
 	}
 
-	if a.port == 0 {
-		a.port = 22
-	}
-	if a.alive == 0 {
-		a.alive = 30
-	}
+	// 注意：默认值在这里不设置，由 applyConfig 处理
+	// 这样可以确保配置文件的值不会被覆盖
 
-	if a.host == "" || a.user == "" {
-		return a, fmt.Errorf("Usage: sshell -u <user> <host> [options]")
-	}
 	return a, nil
 }
 

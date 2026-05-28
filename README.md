@@ -51,6 +51,21 @@ Options
     -V            Show version
     -h, --help    Show help
 
+Configuration
+-------------
+
+sshell supports a JSON configuration file at `~/.sshell/config`:
+
+    {
+      "default_user": "root",
+      "default_port": 2222,
+      "default_auth": "/path/to/key",
+      "default_alive": 60,
+      "verbose": true
+    }
+
+Priority: command line arguments > configuration file > default values
+
 Features
 --------
 

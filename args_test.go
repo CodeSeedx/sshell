@@ -24,11 +24,12 @@ func TestParseArgsDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if a.port != 22 {
-		t.Errorf("port = %d, want 22", a.port)
+	// 注意：默认值现在由 applyConfig 设置，parseArgsFrom 不再设置默认值
+	if a.port != 0 {
+		t.Errorf("port = %d, want 0 (defaults applied later)", a.port)
 	}
-	if a.alive != 30 {
-		t.Errorf("alive = %d, want 30", a.alive)
+	if a.alive != 0 {
+		t.Errorf("alive = %d, want 0 (defaults applied later)", a.alive)
 	}
 	if a.verbose {
 		t.Error("verbose should be false by default")
@@ -93,23 +94,47 @@ func TestParseArgsAuth(t *testing.T) {
 }
 
 func TestParseArgsMissingUser(t *testing.T) {
-	_, err := parseArgsFrom([]string{"host"})
-	if err == nil {
-		t.Error("expected error for missing user")
+	// 注意：parseArgsFrom 不再验证缺少 user，只解析参数
+	// 验证在 parseArgsVerbose 和 parseArgsWithConfig 中进行
+	a, err := parseArgsFrom([]string{"host"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.host != "host" {
+		t.Errorf("host = %q, want %q", a.host, "host")
+	}
+	if a.user != "" {
+		t.Errorf("user should be empty, got %q", a.user)
 	}
 }
 
 func TestParseArgsMissingHost(t *testing.T) {
-	_, err := parseArgsFrom([]string{"-u", "root"})
-	if err == nil {
-		t.Error("expected error for missing host")
+	// 注意：parseArgsFrom 不再验证缺少 host，只解析参数
+	// 验证在 parseArgsVerbose 和 parseArgsWithConfig 中进行
+	a, err := parseArgsFrom([]string{"-u", "root"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.user != "root" {
+		t.Errorf("user = %q, want %q", a.user, "root")
+	}
+	if a.host != "" {
+		t.Errorf("host should be empty, got %q", a.host)
 	}
 }
 
 func TestParseArgsEmpty(t *testing.T) {
-	_, err := parseArgsFrom([]string{})
-	if err == nil {
-		t.Error("expected error for empty args")
+	// 注意：parseArgsFrom 不再验证空参数，只解析参数
+	// 验证在 parseArgsVerbose 和 parseArgsWithConfig 中进行
+	a, err := parseArgsFrom([]string{})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.host != "" {
+		t.Errorf("host should be empty, got %q", a.host)
+	}
+	if a.user != "" {
+		t.Errorf("user should be empty, got %q", a.user)
 	}
 }
 
