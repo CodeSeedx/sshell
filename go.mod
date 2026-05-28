@@ -1,4 +1,4 @@
-module sshell-go
+module sshell
 
 go 1.23.9
 
