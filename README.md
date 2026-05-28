@@ -1,4 +1,4 @@
-sshell-go
+sshell
 =========
 
 轻量级 SSH 客户端，Go 语言编写，单文件输出，无外部运行时依赖。
@@ -6,7 +6,7 @@ sshell-go
 编译
 ----
 
-    go build -o sshell-go .
+    go build -o sshell .
 
 用法
 ----
