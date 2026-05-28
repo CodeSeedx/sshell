@@ -26,6 +26,21 @@ jobs:
         id: version
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
+      - name: Extract release notes from CHANGELOG.md
+        id: changelog
+        run: |
+          VERSION="${{ steps.version.outputs.VERSION }}"
+          # 从 CHANGELOG.md 中提取当前版本的说明
+          # 提取从 "## [VERSION]" 到下一个 "## [" 之间的内容
+          NOTES=$(awk "/^## \\[${VERSION}\\]/{found=1; next} /^## \\[/{if(found) exit} found{print}" CHANGELOG.md)
+          if [ -z "$NOTES" ]; then
+            echo "body=未找到 ${VERSION} 的更新说明，请查看 CHANGELOG.md" >> "$GITHUB_OUTPUT"
+          else
+            # 写入临时文件避免多行字符串问题
+            echo "$NOTES" > /tmp/release_body.md
+            echo "file=/tmp/release_body.md" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build Linux (amd64)
         env:
           GOOS: linux
@@ -75,7 +90,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ steps.version.outputs.VERSION }}
-          generate_release_notes: true
+          body_path: ${{ steps.changelog.outputs.file }}
           files: |
             sshell-${{ steps.version.outputs.VERSION }}-linux-amd64
             sshell-${{ steps.version.outputs.VERSION }}-linux-arm64
