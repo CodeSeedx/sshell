@@ -1,6 +1,12 @@
 sshell
 =========
 
+[![Go](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)](https://go.dev/)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![GitHub Release](https://img.shields.io/github/v/release/xiatianxuan/sshell)](https://github.com/xiatianxuan/sshell/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xiatianxuan/sshell)](https://goreportcard.com/report/github.com/xiatianxuan/sshell)
+[![Build](https://img.shields.io/github/actions/workflow/status/xiatianxuan/sshell/ci.yml?label=CI)](https://github.com/xiatianxuan/sshell/actions)
+
 轻量级 SSH 客户端，Go 语言编写，单文件输出，无外部运行时依赖。
 
 下载
