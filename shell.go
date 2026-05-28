@@ -5,7 +5,6 @@ import (
 	"io"
 	"os"
 	"os/signal"
-	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
@@ -44,7 +43,7 @@ func interactiveShell(session *ssh.Session, a args) error {
 
 	// 信号处理：窗口 resize 和中断
 	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, syscall.SIGWINCH, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(sigCh, sigResize, sigInterrupt, sigTerminate)
 
 	// 转发 stdout
 	outDone := make(chan struct{})
@@ -78,13 +77,13 @@ func interactiveShell(session *ssh.Session, a args) error {
 	go func() {
 		for sig := range sigCh {
 			switch sig {
-			case syscall.SIGWINCH:
+			case sigResize:
 				w, h := getTerminalSize()
 				session.WindowChange(h, w)
 				if a.verbose {
 					fmt.Fprintf(os.Stderr, "[sshell] Window resize: %dx%d\n", w, h)
 				}
-			case syscall.SIGINT, syscall.SIGTERM:
+			case sigInterrupt, sigTerminate:
 				session.Signal(ssh.SIGINT)
 			}
 		}
