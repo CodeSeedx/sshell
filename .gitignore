@@ -3,3 +3,4 @@ sshell.exe
 release/
 coverage.out
 *.exe
+push.sh
