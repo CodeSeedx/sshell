@@ -1,21 +1,5 @@
-# 编译产物
-sshell-go
+sshell
+sshell.exe
+release/
+coverage.out
 *.exe
-
-# 测试相关
-*.test
-*.out
-*.prof
-
-# Go 模块缓存
-vendor/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db

@@ -1,44 +1,29 @@
-BINARY  := sshell-go
-VERSION := $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
-LDFLAGS := -ldflags "-s -w -X main.version=$(VERSION)"
-BUILD   := go build $(LDFLAGS)
+APP_NAME = sshell
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
+LDFLAGS = -ldflags "-s -w -X main.version=$(VERSION)"
 
-.PHONY: all build clean install test lint vet fmt fmtcheck version help
+.PHONY: all build clean build-all release
 
 all: build
 
 build:
-	$(BUILD) -o $(BINARY) .
-
-install:
-	$(BUILD) -o $(BINARY) .
-	@echo "Binary built: ./$(BINARY)"
-	@echo "To install: cp $(BINARY) /usr/local/bin/"
+	go build $(LDFLAGS) -o $(APP_NAME) .
 
 clean:
-	rm -f $(BINARY)
+	rm -f $(APP_NAME)
+	rm -rf release/
 
-test:
-	go test -short -race -v ./...
+build-all: clean
+	mkdir -p release
+	GOOS=linux   GOARCH=amd64 go build $(LDFLAGS) -o release/$(APP_NAME)-linux-amd64 .
+	GOOS=linux   GOARCH=arm64 go build $(LDFLAGS) -o release/$(APP_NAME)-linux-arm64 .
+	GOOS=darwin  GOARCH=amd64 go build $(LDFLAGS) -o release/$(APP_NAME)-darwin-amd64 .
+	GOOS=darwin  GOARCH=arm64 go build $(LDFLAGS) -o release/$(APP_NAME)-darwin-arm64 .
+	GOOS=windows GOARCH=amd64 go build $(LDFLAGS) -o release/$(APP_NAME)-windows-amd64.exe .
 
-vet:
-	go vet ./...
-
-fmtcheck:
-	@test -z "$$(gofmt -l .)" || { echo "Files need formatting:"; gofmt -l .; exit 1; }
-
-lint: vet fmtcheck test
-
-version:
-	@echo $(VERSION)
-
-help:
-	@echo "Targets:"
-	@echo "  build    - 编译二进制文件 (默认)"
-	@echo "  install  - 编译并提示安装"
-	@echo "  clean    - 清理编译产物"
-	@echo "  test     - 运行测试 (含 race 检测)"
-	@echo "  vet      - 静态分析"
-	@echo "  fmtcheck - 检查格式化"
-	@echo "  lint     - vet + fmtcheck + test"
-	@echo "  version  - 显示版本号"
+release: build-all
+	tar czf release/$(APP_NAME)-$(VERSION)-linux-amd64.tar.gz   -C release $(APP_NAME)-linux-amd64
+	tar czf release/$(APP_NAME)-$(VERSION)-linux-arm64.tar.gz   -C release $(APP_NAME)-linux-arm64
+	tar czf release/$(APP_NAME)-$(VERSION)-darwin-amd64.tar.gz  -C release $(APP_NAME)-darwin-amd64
+	tar czf release/$(APP_NAME)-$(VERSION)-darwin-arm64.tar.gz  -C release $(APP_NAME)-darwin-arm64
+	tar czf release/$(APP_NAME)-$(VERSION)-windows-amd64.tar.gz -C release $(APP_NAME)-windows-amd64.exe

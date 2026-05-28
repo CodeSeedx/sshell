@@ -3,10 +3,22 @@ sshell
 
 轻量级 SSH 客户端，Go 语言编写，单文件输出，无外部运行时依赖。
 
+下载
+----
+
+从 [GitHub Releases](https://github.com/xiatianxuan/sshell/releases) 下载对应平台的二进制文件：
+
+- sshell-linux-amd64   — Linux x86_64
+- sshell-linux-arm64   — Linux ARM64
+- sshell-darwin-amd64  — macOS Intel
+- sshell-darwin-arm64  — macOS Apple Silicon
+- sshell-windows-amd64.exe — Windows
+
 编译
 ----
 
-    go build -o sshell .
+    make build          # 编译当前平台
+    make build-all      # 编译全部 5 个平台
 
 用法
 ----
@@ -18,6 +30,7 @@ sshell
     sshell -u root -a ./id_rsa myhost     # 指定密钥文件
     sshell -u root -a mypassword myhost   # 直接传密码
     sshell -u root -v 192.168.1.100       # 详细输出
+    sshell -V                             # 查看版本
 
 选项
 ----
@@ -27,6 +40,7 @@ sshell
     -a <auth>     认证方式：密码或私钥文件路径
     -k <seconds>  TCP Keep-Alive 间隔，默认 30 秒
     -v            详细输出
+    -V            查看版本
     -h, --help    帮助
 
 功能
@@ -48,6 +62,17 @@ sshell
     auth.go      认证逻辑
     connect.go   SSH 连接
     shell.go     交互终端
+    version.go   版本号（编译时注入）
+
+发版流程
+----
+
+向 main 分支推送 tag 即可自动发布：
+
+    git tag v1.0.0
+    git push origin v1.0.0
+
+GitHub Actions 会自动构建 5 个平台的二进制文件并发布到 Release。
 
 依赖
 ----
