@@ -63,6 +63,8 @@ func main() {
 	if a.user == "" && a.host != "" {
 		if bk, ok := lookupBookmark(a.host); ok {
 			// 保留 CLI 已设置的标志，只用书签填充未设置的字段
+			// 注意：cliPort/cliAuth/cliAlive/cliUser 标志位也需要保留，
+			// 因为 a = bk 会替换整个结构体，导致这些标志丢失。
 			cliVerbose := a.verbose
 			cliAgentFwd := a.agentForward
 			cliCompress := a.compress
@@ -78,6 +80,15 @@ func main() {
 			cliScpPut := a.scpPut
 			cliScpGet := a.scpGet
 			cliEditFile := a.editFile
+			cliPort := a.cliPort
+			cliUser := a.cliUser
+			cliAuth := a.cliAuth
+			cliAlive := a.cliAlive
+			// 保存 CLI 显式设置的值（用于在书签值之上恢复）
+			cliPortVal := a.port
+			cliUserVal := a.user
+			cliAuthVal := a.auth
+			cliAliveVal := a.alive
 
 			a = bk
 
@@ -126,6 +137,23 @@ func main() {
 			}
 			if cliEditFile != "" {
 				a.editFile = cliEditFile
+			}
+			// 恢复 CLI 显式设置的参数值和标志位
+			if cliPort {
+				a.port = cliPortVal
+				a.cliPort = true
+			}
+			if cliUser {
+				a.user = cliUserVal
+				a.cliUser = true
+			}
+			if cliAuth {
+				a.auth = cliAuthVal
+				a.cliAuth = true
+			}
+			if cliAlive {
+				a.alive = cliAliveVal
+				a.cliAlive = true
 			}
 
 			// 重新应用默认值
