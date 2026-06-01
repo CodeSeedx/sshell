@@ -171,7 +171,13 @@ func sftpGetClient(sftpClient *sftp.Client, remotePath, localPath string, verbos
 
 	buf := make([]byte, 32*1024)
 	if _, err := io.CopyBuffer(f, inFile, buf); err != nil {
+		f.Close()
 		return fmt.Errorf("copy: %w", err)
+	}
+
+	// 显式关闭本地文件，检查 flush 错误（防止静默数据损坏）
+	if err := f.Close(); err != nil {
+		return fmt.Errorf("close local file: %w", err)
 	}
 
 	return nil

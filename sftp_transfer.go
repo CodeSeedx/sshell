@@ -167,8 +167,11 @@ func sftpGet(client *ssh.Client, remotePath, localPath string, verbose bool) err
 		return fmt.Errorf("create local file: %w", err)
 	}
 	success := false
+	fileClosed := false
 	defer func() {
-		f.Close()
+		if !fileClosed {
+			f.Close()
+		}
 		if success {
 			os.Rename(tmpPath, outPath)
 		} else {
@@ -204,6 +207,13 @@ func sftpGet(client *ssh.Client, remotePath, localPath string, verbose bool) err
 	if verbose && size > 1024*1024 {
 		fmt.Fprintln(os.Stderr)
 	}
+
+	// 显式关闭本地文件，检查 flush 错误（防止静默数据损坏）
+	if err := f.Close(); err != nil {
+		fileClosed = true
+		return fmt.Errorf("close local file: %w", err)
+	}
+	fileClosed = true
 
 	success = true
 	if verbose {

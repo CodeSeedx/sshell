@@ -308,8 +308,11 @@ func scpGet(client *ssh.Client, remotePath, localPath string, verbose bool) erro
 			os.Chmod(tmpPath, os.FileMode(parsedMode))
 		}
 		success := false
+		fileClosed := false
 		defer func() {
-			f.Close()
+			if !fileClosed {
+				f.Close()
+			}
 			if success {
 				// 传输成功，rename 为最终路径
 				os.Rename(tmpPath, outPath)
@@ -373,6 +376,14 @@ func scpGet(client *ssh.Client, remotePath, localPath string, verbose bool) erro
 			resultCh <- scpResult{fmt.Errorf("flush final ack: %w", err)}
 			return
 		}
+
+		// 显式关闭文件，检查 flush 错误（防止静默数据损坏）
+		if err := f.Close(); err != nil {
+			fileClosed = true
+			resultCh <- scpResult{fmt.Errorf("close local file: %w", err)}
+			return
+		}
+		fileClosed = true
 
 		success = true
 		resultCh <- scpResult{nil}
