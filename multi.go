@@ -82,18 +82,19 @@ func runOnHost(a args, host string) error {
 	hostArgs.host = host
 	hostArgs.hosts = nil // 避免递归
 
-	// 应用 SSH config 到目标主机
+	// 应用 SSH config 到目标主机（与单主机模式 applySSHConfigTarget 保持一致的优先级）
+	// 优先级: CLI > SSH config > sshell config > 默认值
 	if cfg := loadSSHConfig(host); cfg != nil {
 		if cfg.HostName != "" {
 			hostArgs.host = cfg.HostName
 		}
-		if cfg.Port != 0 && hostArgs.port == 22 {
+		if cfg.Port != 0 && !hostArgs.cliPort {
 			hostArgs.port = cfg.Port
 		}
-		if cfg.User != "" && hostArgs.user == "" {
+		if cfg.User != "" && !hostArgs.cliUser {
 			hostArgs.user = cfg.User
 		}
-		if cfg.IdentityFile != "" && hostArgs.auth == "" {
+		if cfg.IdentityFile != "" && !hostArgs.cliAuth {
 			hostArgs.auth = cfg.IdentityFile
 		}
 	}
