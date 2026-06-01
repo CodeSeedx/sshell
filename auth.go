@@ -12,6 +12,11 @@ import (
 )
 
 func readPassword(prompt string) (string, error) {
+	// 检查是否是交互式终端
+	if !term.IsTerminal(int(os.Stdin.Fd())) {
+		return "", fmt.Errorf("password required but no terminal available")
+	}
+	
 	fmt.Fprint(os.Stderr, prompt)
 	b, err := term.ReadPassword(int(os.Stdin.Fd()))
 	fmt.Fprintln(os.Stderr)
@@ -29,7 +34,7 @@ func findAuth(a args) ([]ssh.AuthMethod, func(), error) {
 	if !a.noAgent {
 		if agentMethod, agentCleanup, err := sshAgentAuth(); err == nil {
 			methods = append(methods, agentMethod)
-			cleanups = append(cleanups, agentCleanup)
+		 cleanups = append(cleanups, agentCleanup)
 			if a.verbose {
 				fmt.Fprintln(os.Stderr, "[sshell] Auth: SSH Agent")
 			}

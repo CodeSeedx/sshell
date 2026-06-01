@@ -39,8 +39,9 @@ func runRemoteCommand(session *ssh.Session, client *ssh.Client, a args) (int, er
 	if exitErr, ok := err.(*ssh.ExitError); ok {
 		return exitErr.ExitStatus(), nil
 	}
-
-	return 1, fmt.Errorf("run: %w", err)
+	
+	// 其他错误（网络错误等）返回-1表示未知
+	return -1, fmt.Errorf("run: %w", err)
 }
 
 // runRemoteCommandIO 带自定义 IO 的远程命令执行（便于测试）

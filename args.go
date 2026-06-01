@@ -128,9 +128,15 @@ func finalizeArgs(a args) args {
 	// 拆分多主机
 	if a.host != "" {
 		a.hosts = strings.Split(a.host, ",")
+		// 过滤空字符串
+		var validHosts []string
 		for i := range a.hosts {
-			a.hosts[i] = strings.TrimSpace(a.hosts[i])
+			host := strings.TrimSpace(a.hosts[i])
+			if host != "" {
+				validHosts = append(validHosts, host)
+			}
 		}
+		a.hosts = validHosts
 	}
 	// reconnect 默认值
 	if a.reconnect && a.reconnectMax == 0 {

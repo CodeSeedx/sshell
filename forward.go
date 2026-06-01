@@ -187,6 +187,16 @@ func startRemoteForward(client *ssh.Client, spec string, verbose bool) error {
 	// 注册转发映射，让 handler 知道该端口对应哪个本地地址
 	remoteForwardMappings.Store(remotePort, remoteForwardEntry{localAddr: localAddr, verbose: verbose})
 
+	// 注册清理函数（在client关闭时清理映射）
+	go func() {
+		// 等待client关闭
+		client.Wait()
+		remoteForwardMappings.Delete(remotePort)
+		if verbose {
+			fmt.Fprintf(os.Stderr, "[sshell] Remote forward: cleaned up mapping for port %d\n", remotePort)
+		}
+	}()
+
 	return nil
 }
 
@@ -451,7 +461,11 @@ func readSOCKS5Addr(r io.Reader, addrType byte) (string, error) {
 		if _, err := io.ReadFull(r, lenBuf); err != nil {
 			return "", err
 		}
-		domain := make([]byte, lenBuf[0])
+		domainLen := int(lenBuf[0])
+		if domainLen == 0 {
+			return "", fmt.Errorf("empty domain name")
+		}
+		domain := make([]byte, domainLen)
 		if _, err := io.ReadFull(r, domain); err != nil {
 			return "", err
 		}
@@ -601,6 +615,7 @@ func (c *channelConn) resetTimer() {
 	if d <= 0 {
 		// 已过期，立即关闭并清除 deadline
 		c.deadline = time.Time{}
+		// 使用goroutine避免在持锁时调用Close
 		go func() {
 			c.mu.Lock()
 			defer c.mu.Unlock()

@@ -60,7 +60,13 @@ func interactiveShell(session *ssh.Session, client *ssh.Client, a args) error {
 	if err != nil {
 		return fmt.Errorf("raw mode: %w", err)
 	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
+	terminalRestored := false
+	defer func() {
+		if !terminalRestored {
+			term.Restore(int(os.Stdin.Fd()), oldState)
+			terminalRestored = true
+		}
+	}()
 
 	// 信号处理：窗口 resize 和中断
 	sigCh := make(chan os.Signal, 1)
@@ -154,7 +160,10 @@ func interactiveShell(session *ssh.Session, client *ssh.Client, a args) error {
 	// stdin goroutine 可能阻塞在 os.Stdin.Read（无输入时），
 	// 但 session 已结束，outDone/errDone 已关闭，所以可以安全忽略。
 	// 恢复终端以解除可能的 Read 阻塞
-	term.Restore(int(os.Stdin.Fd()), oldState)
+	if !terminalRestored {
+		term.Restore(int(os.Stdin.Fd()), oldState)
+		terminalRestored = true
+	}
 
 	// 等待 stdin goroutine 退出或超时
 	select {

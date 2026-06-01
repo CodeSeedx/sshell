@@ -502,3 +502,72 @@ func TestFindAuthAutoDetectVerbose(t *testing.T) {
 		t.Fatalf("expected 1 auth method, got %d", len(methods))
 	}
 }
+
+// ==================== 修复验证测试 ====================
+
+func Test_readPassword_NonInteractive(t *testing.T) {
+	// 在非交互模式下应该返回错误
+	_, err := readPassword("Password: ")
+	if err == nil {
+		t.Error("Expected error in non-interactive mode")
+	}
+}
+
+func Test_sshAgentAuth_NoSocket(t *testing.T) {
+	// 保存原始环境
+	origSocket := os.Getenv("SSH_AUTH_SOCK")
+	defer os.Setenv("SSH_AUTH_SOCK", origSocket)
+	
+	// 清除环境变量
+	os.Unsetenv("SSH_AUTH_SOCK")
+	
+	_, _, err := sshAgentAuth()
+	if err == nil {
+		t.Error("Expected error when SSH_AUTH_SOCK not set")
+	}
+}
+
+func Test_findAuth_CleanupOnError(t *testing.T) {
+	// 测试错误路径中的cleanup调用
+	a := args{
+		auth: "/nonexistent/key",
+		host: "testhost",
+		user: "testuser",
+	}
+	
+	// 模拟无SSH_AUTH_SOCK环境
+	origSocket := os.Getenv("SSH_AUTH_SOCK")
+	os.Unsetenv("SSH_AUTH_SOCK")
+	defer os.Setenv("SSH_AUTH_SOCK", origSocket)
+	
+	_, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
+	
+	// 应该返回错误，因为密钥文件不存在
+	if err == nil {
+		t.Error("Expected error for non-existent key file")
+	}
+}
+
+func Test_findAuth_PasswordAuth(t *testing.T) {
+	a := args{
+		auth: "testpassword",
+		host: "testhost",
+		user: "testuser",
+	}
+	
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
+	
+	if err != nil {
+		t.Fatalf("findAuth failed: %v", err)
+	}
+	
+	if len(methods) != 1 {
+		t.Fatalf("Expected 1 auth method, got %d", len(methods))
+	}
+}

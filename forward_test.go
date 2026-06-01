@@ -260,3 +260,81 @@ func (c *bufConn) RemoteAddr() net.Addr                                 { return
 func (c *bufConn) SetDeadline(_ time.Time) error                        { return nil }
 func (c *bufConn) SetReadDeadline(_ time.Time) error                    { return nil }
 func (c *bufConn) SetWriteDeadline(_ time.Time) error                   { return nil }
+
+// ==================== 修复验证测试 ====================
+
+func TestReadSOCKS5AddrEmptyDomain(t *testing.T) {
+	// 测试域名长度为0的情况
+	data := []byte{0x00, 0x00, 0x50} // 长度0, 端口80
+	r := bytes.NewReader(data)
+	_, err := readSOCKS5Addr(r, socks5AddrTypeDomain)
+	if err == nil {
+		t.Error("Expected error for empty domain name")
+	}
+}
+
+func TestChannelConn_ConcurrentClose(t *testing.T) {
+	// 测试并发关闭安全性
+	ch := &channelConn{}
+	
+	// 并发调用Close
+	done := make(chan bool, 10)
+	for i := 0; i < 10; i++ {
+		go func() {
+			ch.Close()
+			done <- true
+		}()
+	}
+	
+	// 等待所有goroutine完成
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+}
+
+func TestChannelConn_SetDeadlineAfterClose(t *testing.T) {
+	// 测试关闭后设置deadline
+	ch := &channelConn{}
+	ch.Close()
+	
+	// 设置deadline应该不会panic
+	err := ch.SetDeadline(time.Now().Add(time.Second))
+	if err != nil {
+		t.Logf("SetDeadline after close returned error: %v", err)
+	}
+}
+
+func TestChannelConn_ReadWriteAfterClose(t *testing.T) {
+	// 测试关闭后读写
+	ch := &channelConn{}
+	ch.Close()
+	
+	// 读取应该返回错误
+	buf := make([]byte, 10)
+	_, err := ch.Read(buf)
+	if err == nil {
+		t.Error("Expected error reading from closed connection")
+	}
+	
+	// 写入应该返回错误
+	_, err = ch.Write(buf)
+	if err == nil {
+		t.Error("Expected error writing to closed connection")
+	}
+}
+
+func TestSplitForwardSpec_IPv6(t *testing.T) {
+	// 测试IPv6地址解析
+	spec := "[::1]:8080:localhost:80"
+	parts := splitForwardSpec(spec)
+	if len(parts) != 4 {
+		t.Fatalf("Expected 4 parts, got %d: %v", len(parts), parts)
+	}
+	
+	if parts[0] != "::1" {
+		t.Errorf("Expected '::1', got '%s'", parts[0])
+	}
+	if parts[1] != "8080" {
+		t.Errorf("Expected '8080', got '%s'", parts[1])
+	}
+}

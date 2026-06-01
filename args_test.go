@@ -370,3 +370,120 @@ func TestParseArgsCmdFlagBeforeHost(t *testing.T) {
 		t.Error("verbose should be true")
 	}
 }
+
+// ==================== 修复验证测试 ====================
+
+func Test_finalizeArgs_MultipleHosts(t *testing.T) {
+	// 测试多主机解析
+	a := args{
+		host: "host1,host2,host3",
+	}
+	result := finalizeArgs(a)
+	
+	if len(result.hosts) != 3 {
+		t.Fatalf("Expected 3 hosts, got %d", len(result.hosts))
+	}
+	
+	if result.hosts[0] != "host1" {
+		t.Errorf("Expected 'host1', got '%s'", result.hosts[0])
+	}
+	if result.hosts[1] != "host2" {
+		t.Errorf("Expected 'host2', got '%s'", result.hosts[1])
+	}
+	if result.hosts[2] != "host3" {
+		t.Errorf("Expected 'host3', got '%s'", result.hosts[2])
+	}
+}
+
+func Test_finalizeArgs_EmptyHosts(t *testing.T) {
+	// 测试空主机字符串
+	a := args{
+		host: "",
+	}
+	result := finalizeArgs(a)
+	
+	if len(result.hosts) != 0 {
+		t.Fatalf("Expected 0 hosts, got %d", len(result.hosts))
+	}
+}
+
+func Test_finalizeArgs_ConsecutiveCommas(t *testing.T) {
+	// 测试连续逗号（边界条件）
+	a := args{
+		host: "host1,,host2",
+	}
+	result := finalizeArgs(a)
+	
+	// 应该过滤掉空字符串
+	if len(result.hosts) != 2 {
+		t.Fatalf("Expected 2 hosts, got %d: %v", len(result.hosts), result.hosts)
+	}
+	
+	if result.hosts[0] != "host1" {
+		t.Errorf("Expected 'host1', got '%s'", result.hosts[0])
+	}
+	if result.hosts[1] != "host2" {
+		t.Errorf("Expected 'host2', got '%s'", result.hosts[1])
+	}
+}
+
+func Test_finalizeArgs_SpacesInHosts(t *testing.T) {
+	// 测试主机名中包含空格
+	a := args{
+		host: " host1 , host2 ",
+	}
+	result := finalizeArgs(a)
+	
+	if len(result.hosts) != 2 {
+		t.Fatalf("Expected 2 hosts, got %d: %v", len(result.hosts), result.hosts)
+	}
+	
+	if result.hosts[0] != "host1" {
+		t.Errorf("Expected 'host1', got '%s'", result.hosts[0])
+	}
+	if result.hosts[1] != "host2" {
+		t.Errorf("Expected 'host2', got '%s'", result.hosts[1])
+	}
+}
+
+func Test_finalizeArgs_SingleHost(t *testing.T) {
+	// 测试单个主机
+	a := args{
+		host: "singlehost",
+	}
+	result := finalizeArgs(a)
+	
+	if len(result.hosts) != 1 {
+		t.Fatalf("Expected 1 host, got %d", len(result.hosts))
+	}
+	
+	if result.hosts[0] != "singlehost" {
+		t.Errorf("Expected 'singlehost', got '%s'", result.hosts[0])
+	}
+}
+
+func Test_finalizeArgs_TrailingComma(t *testing.T) {
+	// 测试末尾逗号
+	a := args{
+		host: "host1,host2,",
+	}
+	result := finalizeArgs(a)
+	
+	// 应该过滤掉空字符串
+	if len(result.hosts) != 2 {
+		t.Fatalf("Expected 2 hosts, got %d: %v", len(result.hosts), result.hosts)
+	}
+}
+
+func Test_finalizeArgs_LeadingComma(t *testing.T) {
+	// 测试开头逗号
+	a := args{
+		host: ",host1,host2",
+	}
+	result := finalizeArgs(a)
+	
+	// 应该过滤掉空字符串
+	if len(result.hosts) != 2 {
+		t.Fatalf("Expected 2 hosts, got %d: %v", len(result.hosts), result.hosts)
+	}
+}
