@@ -513,7 +513,15 @@ func connectClientWithRetry(a args) (*sshConn, error) {
 
 // exponentialBackoff 计算指数退避时间，上限 60 秒
 func exponentialBackoff(attempt int) time.Duration {
-	backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+	if attempt < 1 {
+		attempt = 1
+	}
+	// 限制移位量避免整数溢出（2^6 = 64 > 60，所以 7 足够）
+	shift := attempt - 1
+	if shift > 6 {
+		shift = 6
+	}
+	backoff := time.Duration(1<<uint(shift)) * time.Second
 	if backoff > 60*time.Second {
 		backoff = 60 * time.Second
 	}

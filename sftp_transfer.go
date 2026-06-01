@@ -66,15 +66,6 @@ func sftpPut(client *ssh.Client, localPath, remotePath string, verbose bool) err
 	if err != nil {
 		return fmt.Errorf("open remote file: %w", err)
 	}
-	defer func() {
-		outFile.Close()
-		// 写入完成后再设置权限，避免空文件以错误权限暴露
-		if err := sftpClient.Chmod(finalRemotePath, stat.Mode().Perm()); err != nil {
-			if verbose {
-				fmt.Fprintf(os.Stderr, "[sshell] Warning: could not set permissions: %v\n", err)
-			}
-		}
-	}()
 
 	// Copy with progress reporting
 	sent := int64(0)
@@ -83,6 +74,7 @@ func sftpPut(client *ssh.Client, localPath, remotePath string, verbose bool) err
 		n, readErr := f.Read(buf)
 		if n > 0 {
 			if _, writeErr := outFile.Write(buf[:n]); writeErr != nil {
+				outFile.Close()
 				return fmt.Errorf("write remote: %w", writeErr)
 			}
 			sent += int64(n)
@@ -96,12 +88,25 @@ func sftpPut(client *ssh.Client, localPath, remotePath string, verbose bool) err
 			break
 		}
 		if readErr != nil {
+			outFile.Close()
 			return fmt.Errorf("read local file: %w", readErr)
 		}
 	}
 
 	if verbose && stat.Size() > 1024*1024 {
 		fmt.Fprintln(os.Stderr)
+	}
+
+	// 关闭远程文件，捕获可能的 flush 错误（防止数据丢失）
+	if err := outFile.Close(); err != nil {
+		return fmt.Errorf("close remote file: %w", err)
+	}
+
+	// 写入完成后再设置权限，避免空文件以错误权限暴露
+	if err := sftpClient.Chmod(finalRemotePath, stat.Mode().Perm()); err != nil {
+		if verbose {
+			fmt.Fprintf(os.Stderr, "[sshell] Warning: could not set permissions: %v\n", err)
+		}
 	}
 
 	if verbose {
