@@ -1,5 +1,6 @@
 sshell
 sshell.exe
+sshell-versiontest
 release/
 coverage.out
 *.exe

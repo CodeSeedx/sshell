@@ -282,7 +282,10 @@ func TestFindAuthWithPassword(t *testing.T) {
 		host: "testhost",
 		user: "testuser",
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth failed: %v", err)
 	}
@@ -298,7 +301,10 @@ func TestFindAuthWithKeyFile(t *testing.T) {
 		host: "testhost",
 		user: "testuser",
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth failed: %v", err)
 	}
@@ -315,7 +321,10 @@ func TestFindAuthWithVerboseKey(t *testing.T) {
 		user:    "testuser",
 		verbose: true,
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth failed: %v", err)
 	}
@@ -331,7 +340,10 @@ func TestFindAuthWithVerbosePassword(t *testing.T) {
 		user:    "testuser",
 		verbose: true,
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth failed: %v", err)
 	}
@@ -371,7 +383,10 @@ func TestFindAuthAutoDetect(t *testing.T) {
 		host: "testhost",
 		user: "testuser",
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth auto-detect failed: %v", err)
 	}
@@ -392,7 +407,10 @@ func TestFindAuthNoAutoDetect(t *testing.T) {
 		user: "testuser",
 	}
 
-	_, err := findAuth(a)
+	_, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err == nil {
 		t.Log("findAuth succeeded (system has available keys)")
 	}
@@ -410,7 +428,10 @@ func TestFindAuthInvalidKeyFile(t *testing.T) {
 		host: "testhost",
 		user: "testuser",
 	}
-	_, err := findAuth(a)
+	_, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err == nil {
 		t.Error("expected error for invalid key file")
 	}
@@ -429,7 +450,10 @@ func TestFindAuthInvalidKeyFileVerbose(t *testing.T) {
 		user:    "testuser",
 		verbose: true,
 	}
-	_, err := findAuth(a)
+	_, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err == nil {
 		t.Error("expected error for invalid key file verbose")
 	}
@@ -467,7 +491,10 @@ func TestFindAuthAutoDetectVerbose(t *testing.T) {
 		user:    "testuser",
 		verbose: true,
 	}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth auto-detect verbose failed: %v", err)
 	}

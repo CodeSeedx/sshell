@@ -47,6 +47,21 @@ sshell
     -k <seconds>  TCP Keep-Alive 间隔，默认 30 秒
     -v            详细输出
     -V            查看版本
+    -C            启用压缩
+    -J <jump>     通过跳板机连接
+    -L <spec>     本地端口转发 ([bind:]port:host:hostport)
+    -R <spec>     远程端口转发 ([bind:]port:host:hostport)
+    -D <port>     SOCKS5 动态代理端口
+    --put <L:R>   上传本地文件到远程 (SCP/SFTP)
+    --get <R:L>   下载远程文件到本地 (SCP/SFTP)
+    --sftp        使用 SFTP 协议传输文件（保留权限）
+    --log <file>  会话日志输出到文件
+    --save <name> 保存当前连接为书签
+    --list        列出已保存的书签
+    --delete <n>  删除书签
+    --no-agent    禁用 SSH Agent 认证
+    --reconnect   断线自动重连
+    --reconnect-max N  最大重连次数（默认 3）
     -h, --help    帮助
 
 功能
@@ -59,6 +74,12 @@ sshell
 - 主机校验：读取 ~/.ssh/known_hosts，首次连接自动接受并提示
 - 信号处理：Ctrl+C 正确转发，SIGWINCH 动态调整终端大小
 - 空闲检测：30 分钟无活动自动退出
+- 文件传输：SCP 和 SFTP 协议，支持进度显示和权限保留
+- 端口转发：本地 (-L)、远程 (-R) 和 SOCKS5 (-D) 转发
+- 跳板机：通过 -J 支持多级跳转
+- 书签：保存和复用连接配置
+- 多主机：同时在多台主机上执行命令
+- Shell 补全：支持 Bash、Zsh 和 Fish 补全脚本
 
 架构
 ----
@@ -85,3 +106,4 @@ GitHub Actions 会自动构建 5 个平台的二进制文件并发布到 Release
 
     golang.org/x/crypto
     golang.org/x/term
+    github.com/pkg/sftp

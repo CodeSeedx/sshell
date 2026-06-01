@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -44,23 +45,32 @@ func loadConfig() config {
 	if err != nil {
 		return c
 	}
-	_ = json.Unmarshal(data, &c)
+	if err := json.Unmarshal(data, &c); err != nil {
+		fmt.Fprintf(os.Stderr, "[sshell] Warning: config file parse error: %v\n", err)
+	}
 	return c
 }
 
 // applyConfig 将配置文件的值应用到 args，仅当命令行参数未设置时
 // 同时设置默认值（如果配置文件和命令行都没有设置）
 func applyConfig(a *args, c config) {
-	if a.user == "" && c.DefaultUser != "" {
+	if !a.cliUser && a.user == "" && c.DefaultUser != "" {
 		a.user = c.DefaultUser
 	}
-	if a.port == 0 && c.DefaultPort != 0 {
+	if !a.cliPort && a.port == 0 && c.DefaultPort != 0 {
 		a.port = c.DefaultPort
 	}
-	if a.auth == "" && c.DefaultAuth != "" {
-		a.auth = c.DefaultAuth
+	if !a.cliAuth && a.auth == "" && c.DefaultAuth != "" {
+		// 展开路径中的 ~ 前缀
+		auth := c.DefaultAuth
+		if len(auth) >= 2 && auth[0] == '~' && auth[1] == '/' {
+			if home, err := os.UserHomeDir(); err == nil {
+				auth = filepath.Join(home, auth[2:])
+			}
+		}
+		a.auth = auth
 	}
-	if a.alive == 0 && c.DefaultAlive != 0 {
+	if !a.cliAlive && a.alive == 0 && c.DefaultAlive != 0 {
 		a.alive = c.DefaultAlive
 	}
 	if !a.verbose && c.Verbose {
@@ -76,7 +86,7 @@ func applyConfig(a *args, c config) {
 	}
 }
 
-// saveConfig 保存配置到文件（用于生成示例配置）
+// saveConfig 保存配置到文件（原子写入）
 func saveConfig(c config) error {
 	dir, err := configDir()
 	if err != nil {
@@ -93,5 +103,9 @@ func saveConfig(c config) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0600)
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0600); err != nil {
+		return err
+	}
+	return os.Rename(tmpPath, path)
 }

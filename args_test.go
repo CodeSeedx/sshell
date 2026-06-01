@@ -289,3 +289,84 @@ func TestPrintUsage(t *testing.T) {
 	// printUsage 输出到 stderr，这里只测不 panic
 	printUsage()
 }
+
+// ==================== cmd 参数解析测试 ====================
+
+func TestParseArgsCmdSingle(t *testing.T) {
+	a, err := parseArgsFrom([]string{"-u", "root", "host", "ls"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.host != "host" {
+		t.Errorf("host = %q, want %q", a.host, "host")
+	}
+	if a.cmd != "ls" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "ls")
+	}
+}
+
+func TestParseArgsCmdQuoted(t *testing.T) {
+	a, err := parseArgsFrom([]string{"-u", "root", "host", "df -h"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.cmd != "df -h" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "df -h")
+	}
+}
+
+func TestParseArgsCmdMultipleWords(t *testing.T) {
+	a, err := parseArgsFrom([]string{"-u", "root", "host", "ls", "-la", "/tmp"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.cmd != "ls -la /tmp" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "ls -la /tmp")
+	}
+}
+
+func TestParseArgsNoCmd(t *testing.T) {
+	a, err := parseArgsFrom([]string{"-u", "root", "host"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.cmd != "" {
+		t.Errorf("cmd = %q, want empty", a.cmd)
+	}
+}
+
+func TestParseArgsCmdWithFlags(t *testing.T) {
+	a, err := parseArgsFrom([]string{"-u", "root", "-p", "2222", "-v", "host", "uptime"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.host != "host" {
+		t.Errorf("host = %q, want %q", a.host, "host")
+	}
+	if a.cmd != "uptime" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "uptime")
+	}
+	if a.port != 2222 {
+		t.Errorf("port = %d, want 2222", a.port)
+	}
+	if !a.verbose {
+		t.Error("verbose should be true")
+	}
+}
+
+func TestParseArgsCmdFlagBeforeHost(t *testing.T) {
+	// -v 在 host 之前，cmd 在 host 之后
+	a, err := parseArgsFrom([]string{"-u", "root", "-v", "host", "echo", "hello"})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if a.host != "host" {
+		t.Errorf("host = %q, want %q", a.host, "host")
+	}
+	if a.cmd != "echo hello" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "echo hello")
+	}
+	if !a.verbose {
+		t.Error("verbose should be true")
+	}
+}

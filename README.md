@@ -49,6 +49,21 @@ Options
     -k <seconds>  TCP Keep-Alive interval, default 30s
     -v            Verbose output
     -V            Show version
+    -C            Enable compression
+    -J <jump>     ProxyJump through bastion host
+    -L <spec>     Local port forwarding ([bind:]port:host:hostport)
+    -R <spec>     Remote port forwarding ([bind:]port:host:hostport)
+    -D <port>     SOCKS5 dynamic proxy on local port
+    --put <L:R>   Upload local file to remote (SCP/SFTP)
+    --get <R:L>   Download remote file to local (SCP/SFTP)
+    --sftp        Use SFTP protocol for --put/--get (preserves permissions)
+    --log <file>  Log session output to file
+    --save <name> Save current connection as bookmark
+    --list        List saved bookmarks
+    --delete <n>  Delete a bookmark
+    --no-agent    Disable SSH Agent authentication
+    --reconnect   Auto-reconnect on disconnect
+    --reconnect-max N  Max reconnect attempts (default 3)
     -h, --help    Show help
 
 Configuration
@@ -76,6 +91,12 @@ Features
 - Host verification: Reads ~/.ssh/known_hosts, auto-accept on first connect
 - Signal handling: Ctrl+C forwarding, SIGWINCH dynamic terminal resize
 - Idle timeout: Auto-exit after 30 minutes of inactivity
+- File transfer: SCP and SFTP protocols with progress reporting and permission preservation
+- Port forwarding: Local (-L), Remote (-R), and SOCKS5 (-D) forwarding
+- ProxyJump: Multi-hop SSH via -J bastion host
+- Bookmarks: Save and reuse connection profiles
+- Multi-host: Execute commands on multiple hosts simultaneously
+- Shell completion: Bash, Zsh, and Fish completion scripts
 
 Architecture
 ------------
@@ -102,6 +123,7 @@ Dependencies
 
     golang.org/x/crypto
     golang.org/x/term
+    github.com/pkg/sftp
 
 License
 -------

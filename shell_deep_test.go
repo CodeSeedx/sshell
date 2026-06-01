@@ -178,40 +178,32 @@ func TestParseArgsFromDoubleDashVersion(t *testing.T) {
 }
 
 func TestParseArgsFromUnknownFlag(t *testing.T) {
-	// 未知的 -x 标志不会被识别，value 作为非标志参数会被当作 host
-	a, err := parseArgsFrom([]string{"-x", "value"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	// -x 不被识别，value 不以 - 开头所以被当作 host
-	if a.host != "value" {
-		t.Errorf("host = %q, want %q", a.host, "value")
-	}
-	// -x 不被识别，不会消费 "value"，所以 x 本身不会被解析成任何字段
-	if a.user != "" {
-		t.Errorf("user should be empty, got %q", a.user)
+	// 未知的 -x 标志现在会返回错误
+	_, err := parseArgsFrom([]string{"-x", "value"})
+	if err == nil {
+		t.Error("expected error for unknown flag -x")
 	}
 }
 
 func TestParseArgsFromUnknownFlagOnly(t *testing.T) {
 	// 只有未知标志，没有值
-	a, err := parseArgsFrom([]string{"-x"})
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if a.host != "" {
-		t.Errorf("host should be empty, got %q", a.host)
+	_, err := parseArgsFrom([]string{"-x"})
+	if err == nil {
+		t.Error("expected error for unknown flag -x")
 	}
 }
 
 func TestParseArgsFromMultipleHosts(t *testing.T) {
-	// 第二个非标志参数应该被忽略
+	// 第二个非标志参数现在作为远程命令（cmd）
 	a, err := parseArgsFrom([]string{"host1", "host2"})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if a.host != "host1" {
 		t.Errorf("host = %q, want %q", a.host, "host1")
+	}
+	if a.cmd != "host2" {
+		t.Errorf("cmd = %q, want %q", a.cmd, "host2")
 	}
 }
 

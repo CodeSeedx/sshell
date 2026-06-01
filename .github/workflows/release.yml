@@ -48,7 +48,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o sshell-${{ steps.version.outputs.VERSION }}-linux-amd64 ./cmd/sshell
+            -o sshell-${{ steps.version.outputs.VERSION }}-linux-amd64 .
 
       - name: Build Linux (arm64)
         env:
@@ -57,7 +57,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o sshell-${{ steps.version.outputs.VERSION }}-linux-arm64 ./cmd/sshell
+            -o sshell-${{ steps.version.outputs.VERSION }}-linux-arm64 .
 
       - name: Build macOS (amd64)
         env:
@@ -66,7 +66,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o sshell-${{ steps.version.outputs.VERSION }}-darwin-amd64 ./cmd/sshell
+            -o sshell-${{ steps.version.outputs.VERSION }}-darwin-amd64 .
 
       - name: Build macOS (arm64)
         env:
@@ -75,7 +75,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o sshell-${{ steps.version.outputs.VERSION }}-darwin-arm64 ./cmd/sshell
+            -o sshell-${{ steps.version.outputs.VERSION }}-darwin-arm64 .
 
       - name: Build Windows (amd64)
         env:
@@ -84,7 +84,7 @@ jobs:
           CGO_ENABLED: "0"
         run: |
           go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }}" \
-            -o sshell-${{ steps.version.outputs.VERSION }}-windows-amd64.exe ./cmd/sshell
+            -o sshell-${{ steps.version.outputs.VERSION }}-windows-amd64.exe .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

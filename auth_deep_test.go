@@ -271,7 +271,10 @@ func TestAutoDetectKeyBadRSA(t *testing.T) {
 func TestFindAuthWithRSAKeyFile(t *testing.T) {
 	keyPath := generateTestRSAKey(t)
 	a := args{auth: keyPath, host: "host", user: "user"}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth RSA key failed: %v", err)
 	}
@@ -283,7 +286,10 @@ func TestFindAuthWithRSAKeyFile(t *testing.T) {
 func TestFindAuthWithECDSAKeyFile(t *testing.T) {
 	keyPath := generateTestECDSAKey(t)
 	a := args{auth: keyPath, host: "host", user: "user"}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth ECDSA key failed: %v", err)
 	}
@@ -295,7 +301,10 @@ func TestFindAuthWithECDSAKeyFile(t *testing.T) {
 func TestFindAuthWithRSAKeyVerbose(t *testing.T) {
 	keyPath := generateTestRSAKey(t)
 	a := args{auth: keyPath, host: "host", user: "user", verbose: true}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth RSA verbose failed: %v", err)
 	}
@@ -319,7 +328,10 @@ func TestFindAuthAutoDetectWithRSA(t *testing.T) {
 	defer os.Setenv("HOME", origHome)
 
 	a := args{host: "host", user: "user"}
-	methods, err := findAuth(a)
+	methods, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	if err != nil {
 		t.Fatalf("findAuth auto-detect RSA failed: %v", err)
 	}
@@ -337,7 +349,10 @@ func TestFindAuthNoAuthSpecifiedNoKeys(t *testing.T) {
 	// 没有密钥文件，findAuth 会尝试读取密码
 	// 在非交互终端会失败，但至少不 panic
 	a := args{host: "host", user: "user"}
-	_, err := findAuth(a)
+	_, cleanup, err := findAuth(a)
+	if cleanup != nil {
+		defer cleanup()
+	}
 	// 如果系统有密钥可能成功，否则会失败
 	if err != nil {
 		t.Logf("findAuth without keys (expected in non-interactive): %v", err)
