@@ -218,11 +218,12 @@ func sftpPutClient(sftpClient *sftp.Client, localPath, remotePath string, verbos
 
 // getEditor 获取编辑器，优先级: EDITOR > VISUAL > vim > vi > nano > notepad
 func getEditor() string {
-	if editor := os.Getenv("EDITOR"); editor != "" {
-		// 返回第一个词作为编辑器命令（忽略参数，由调用者处理）
+	// POSIX 惯例: VISUAL 优先于 EDITOR
+	// VISUAL 用于全屏编辑器，EDITOR 用于非交互场景的兜底
+	if editor := os.Getenv("VISUAL"); editor != "" {
 		return editor
 	}
-	if editor := os.Getenv("VISUAL"); editor != "" {
+	if editor := os.Getenv("EDITOR"); editor != "" {
 		return editor
 	}
 

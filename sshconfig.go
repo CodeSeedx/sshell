@@ -291,9 +291,12 @@ func matchGlob(pattern, s string) bool {
 // replaceTokens 替换 IdentityFile 中的 OpenSSH token
 // 支持: %h (hostname), %l (local hostname), %u (local user), %r (remote user), %p (port), %% (literal %)
 func replaceTokens(path, hostname, localuser string) string {
+	// 先替换 %% 为占位符，再替换 %h/%l，最后还原字面 %
+	// 避免 %%h 被错误替换为 %hostname
+	path = strings.ReplaceAll(path, "%%", "\x00PERCENT\x00")
 	path = strings.ReplaceAll(path, "%h", hostname)
 	path = strings.ReplaceAll(path, "%l", localuser)
-	path = strings.ReplaceAll(path, "%%", "%")
+	path = strings.ReplaceAll(path, "\x00PERCENT\x00", "%")
 	// 展开 ~ 前缀
 	if strings.HasPrefix(path, "~/") {
 		if home, err := os.UserHomeDir(); err == nil {
