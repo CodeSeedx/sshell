@@ -19,22 +19,22 @@ type sshConn struct {
 }
 
 func (c *sshConn) Close() error {
-	var err1 error
+	var firstErr error
+
 	if c.Session != nil {
-		err1 = c.Session.Close()
+		if err := c.Session.Close(); err != nil {
+			firstErr = err
+		}
 	}
-	err2 := c.client.Close()
-	var err3 error
+	if err := c.client.Close(); err != nil && firstErr == nil {
+		firstErr = err
+	}
 	if c.onClose != nil {
-		err3 = c.onClose()
+		if err := c.onClose(); err != nil && firstErr == nil {
+			firstErr = err
+		}
 	}
-	if err1 != nil {
-		return err1
-	}
-	if err2 != nil {
-		return err2
-	}
-	return err3
+	return firstErr
 }
 
 // connectClient 只建立 SSH 客户端连接，不创建 session
