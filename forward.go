@@ -623,17 +623,20 @@ func (c *channelConn) resetTimer() {
 		go func() {
 			c.mu.Lock()
 			defer c.mu.Unlock()
-			if !c.closed {
+			// 仅当 deadline 未被新 SetDeadline 调用修改时才关闭
+			if !c.closed && c.deadline == (time.Time{}) {
 				c.closed = true
 				c.Channel.Close()
 			}
 		}()
 		return
 	}
+	// 捕获当前 deadline，避免 timer 回调干扰后续 SetDeadline
+	savedDeadline := c.deadline
 	c.timer = time.AfterFunc(d, func() {
 		c.mu.Lock()
 		defer c.mu.Unlock()
-		if !c.closed {
+		if !c.closed && c.deadline == savedDeadline {
 			c.deadline = time.Time{}
 			c.timer = nil
 			c.closed = true
