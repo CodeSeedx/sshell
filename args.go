@@ -75,6 +75,9 @@ type args struct {
 	cliUser bool // -u 被显式指定
 	cliAuth bool // -a 被显式指定
 	cliAlive bool // -k 被显式指定
+
+	// 安全选项
+	insecureHostKey bool // --insecure-host-key: 允许跳过主机密钥校验
 }
 
 func parseArgs() args {
@@ -225,6 +228,8 @@ func parseArgsFrom(argv []string) (args, error) {
 				a.reconnect = true
 			case "sftp":
 				a.sftp = true
+			case "insecure-host-key":
+				a.insecureHostKey = true
 			default:
 				// 带值的长选项
 				if i+1 >= len(argv) {
@@ -475,6 +480,7 @@ func printUsage() {
 	fmt.Fprintln(os.Stderr, "  --delete <name> Delete a bookmark")
 	fmt.Fprintln(os.Stderr, "  --no-agent      Disable SSH Agent authentication")
 	fmt.Fprintln(os.Stderr, "  --agent-forward Enable SSH Agent forwarding (same as -A)")
+	fmt.Fprintln(os.Stderr, "  --insecure-host-key  Skip host key verification (MITM risk)")
 	fmt.Fprintln(os.Stderr, "  --reconnect     Auto-reconnect on disconnect")
 	fmt.Fprintln(os.Stderr, "  --reconnect-max Max reconnect attempts (default: 3)")
 	fmt.Fprintln(os.Stderr, "")

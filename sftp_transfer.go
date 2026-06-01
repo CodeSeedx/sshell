@@ -66,13 +66,15 @@ func sftpPut(client *ssh.Client, localPath, remotePath string, verbose bool) err
 	if err != nil {
 		return fmt.Errorf("open remote file: %w", err)
 	}
-	// 立即设置权限，减少文件以错误权限暴露的窗口期
-	if err := sftpClient.Chmod(finalRemotePath, stat.Mode().Perm()); err != nil {
-		if verbose {
-			fmt.Fprintf(os.Stderr, "[sshell] Warning: could not set permissions: %v\n", err)
+	defer func() {
+		outFile.Close()
+		// 写入完成后再设置权限，避免空文件以错误权限暴露
+		if err := sftpClient.Chmod(finalRemotePath, stat.Mode().Perm()); err != nil {
+			if verbose {
+				fmt.Fprintf(os.Stderr, "[sshell] Warning: could not set permissions: %v\n", err)
+			}
 		}
-	}
-	defer outFile.Close()
+	}()
 
 	// Copy with progress reporting
 	sent := int64(0)

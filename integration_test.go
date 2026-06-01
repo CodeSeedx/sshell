@@ -220,11 +220,12 @@ func generateTestKey(t *testing.T, dir string) (privPath, pubPath string) {
 // makeTestArgs 构造测试用的 args
 func makeTestArgs(server *testSSHServer, user, password string) args {
 	return args{
-		host:  "127.0.0.1",
-		port:  uint16(server.listener.Addr().(*net.TCPAddr).Port),
-		user:  user,
-		auth:  password,
-		alive: 30,
+		host:            "127.0.0.1",
+		port:            uint16(server.listener.Addr().(*net.TCPAddr).Port),
+		user:            user,
+		auth:            password,
+		alive:           30,
+		insecureHostKey: true, // 测试服务器每次生成随机 host key，跳过验证
 	}
 }
 

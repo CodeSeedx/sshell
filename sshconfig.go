@@ -124,11 +124,24 @@ func parseSSHConfig(path string) []sshHostConfig {
 // maxIncludeDepth 防止 Include 指令无限递归
 const maxIncludeDepth = 10
 
+// maxIncludeFiles 防止 Include 通配符匹配过多文件
+const maxIncludeFiles = 50
+
 // parseSSHConfigDepth 带深度限制的 SSH config 解析
 func parseSSHConfigDepth(path string, depth int) []sshHostConfig {
+	total := 0
+	return parseSSHConfigDepthCount(path, depth, &total)
+}
+
+// parseSSHConfigDepthCount 带深度和文件总数限制的 SSH config 解析
+func parseSSHConfigDepthCount(path string, depth int, totalFiles *int) []sshHostConfig {
 	if depth > maxIncludeDepth {
 		return nil
 	}
+	if *totalFiles >= maxIncludeFiles {
+		return nil
+	}
+	*totalFiles++
 
 	f, err := os.Open(path)
 	if err != nil {
@@ -217,7 +230,7 @@ func parseSSHConfigDepth(path string, depth int) []sshHostConfig {
 				matches = []string{expanded}
 			}
 			for _, match := range matches {
-				if included := parseSSHConfigDepth(match, depth+1); included != nil {
+				if included := parseSSHConfigDepthCount(match, depth+1, totalFiles); included != nil {
 					blocks = append(blocks, included...)
 				}
 			}
@@ -275,10 +288,12 @@ func matchGlob(pattern, s string) bool {
 	return pi == len(pattern)
 }
 
-// replaceTokens 替换 IdentityFile 中的 %h 和 %l token
+// replaceTokens 替换 IdentityFile 中的 OpenSSH token
+// 支持: %h (hostname), %l (local hostname), %u (local user), %r (remote user), %p (port), %% (literal %)
 func replaceTokens(path, hostname, localuser string) string {
 	path = strings.ReplaceAll(path, "%h", hostname)
 	path = strings.ReplaceAll(path, "%l", localuser)
+	path = strings.ReplaceAll(path, "%%", "%")
 	// 展开 ~ 前缀
 	if strings.HasPrefix(path, "~/") {
 		if home, err := os.UserHomeDir(); err == nil {

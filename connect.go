@@ -79,10 +79,14 @@ func dialSSH(a args, addr string) (*ssh.Client, error) {
 	// 主机密钥校验
 	hostKeyCallback, err := loadKnownHosts(a.verbose)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
-		fmt.Fprintln(os.Stderr, "[sshell] WARNING: Falling back to INSECURE host key check. Connections are vulnerable to MITM attacks.")
-		fmt.Fprintln(os.Stderr, "[sshell] To fix: touch ~/.ssh/known_hosts && ssh-keygen -R <host>")
-		hostKeyCallback = ssh.InsecureIgnoreHostKey()
+		if a.insecureHostKey {
+			fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
+			fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check. Connections are vulnerable to MITM attacks.")
+			hostKeyCallback = ssh.InsecureIgnoreHostKey()
+		} else {
+			conn.Close()
+			return nil, fmt.Errorf("host key verification failed: %w (use --insecure-host-key to override)", err)
+		}
 	}
 
 	config := buildSSHConfig(a, authMethods, hostKeyCallback)
@@ -206,13 +210,16 @@ func buildJumpArgs(a args) args {
 	}
 
 	jumpArgs := args{
-		host:    a.proxyJump,
-		port:    22,
-		user:    jumpUser,
-		auth:    a.auth,
-		alive:   a.alive,
-		verbose: a.verbose,
-		noAgent: a.noAgent,
+		host:            a.proxyJump,
+		port:            22,
+		user:            jumpUser,
+		auth:            a.auth,
+		alive:           a.alive,
+		verbose:         a.verbose,
+		noAgent:         a.noAgent,
+		compress:        a.compress,
+		agentForward:    a.agentForward,
+		insecureHostKey: a.insecureHostKey,
 	}
 
 	// 如果命令行指定了端口（-J host:port），优先使用
@@ -257,9 +264,14 @@ func dialSSHVia(via *ssh.Client, a args, destAddr string) (*ssh.Client, error) {
 
 	hostKeyCallback, err := loadKnownHosts(a.verbose)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
-		fmt.Fprintln(os.Stderr, "[sshell] WARNING: Falling back to INSECURE host key check. Connections are vulnerable to MITM attacks.")
-		hostKeyCallback = ssh.InsecureIgnoreHostKey()
+		if a.insecureHostKey {
+			fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
+			fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check.")
+			hostKeyCallback = ssh.InsecureIgnoreHostKey()
+		} else {
+			conn.Close()
+			return nil, fmt.Errorf("host key verification failed: %w (use --insecure-host-key to override)", err)
+		}
 	}
 
 	config := buildSSHConfig(a, authMethods, hostKeyCallback)
@@ -405,13 +417,16 @@ func buildJumpHostArgs(a args, jh jumpHost) args {
 	}
 
 	jumpArgs := args{
-		host:    jh.Host,
-		port:    port,
-		user:    jumpUser,
-		auth:    a.auth,
-		alive:   a.alive,
-		verbose: a.verbose,
-		noAgent: a.noAgent,
+		host:            jh.Host,
+		port:            port,
+		user:            jumpUser,
+		auth:            a.auth,
+		alive:           a.alive,
+		verbose:         a.verbose,
+		noAgent:         a.noAgent,
+		insecureHostKey: a.insecureHostKey,
+		compress:        a.compress,
+		agentForward:    a.agentForward,
 	}
 
 	// 应用 SSH config
@@ -457,15 +472,15 @@ func connectWithRetry(a args) (*sshConn, error) {
 			if a.verbose {
 				fmt.Fprintf(os.Stderr, "[sshell] Reconnect attempt %d/%d after error: %v\n", attempt, maxAttempts, err)
 			}
-			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+			time.Sleep(exponentialBackoff(attempt)) // 指数退避: 1s, 2s, 4s, max 60s
 		}
 	}
 	
 	// 返回包含所有尝试错误的详细信息
 	if len(attempts) > 1 {
-		return nil, fmt.Errorf("reconnect failed after %d attempts, last error: %w", maxAttempts, lastErr)
+		return nil, fmt.Errorf("reconnect failed after %d attempts, last error: %w", len(attempts), lastErr)
 	}
-	return nil, fmt.Errorf("reconnect failed after %d attempts: %w", maxAttempts, lastErr)
+	return nil, fmt.Errorf("reconnect failed: %w", lastErr)
 }
 
 // connectClientWithRetry 带重连的连接（不带 session，用于 SCP/转发模式）
@@ -490,10 +505,19 @@ func connectClientWithRetry(a args) (*sshConn, error) {
 			if a.verbose {
 				fmt.Fprintf(os.Stderr, "[sshell] Reconnect attempt %d/%d after error: %v\n", attempt, maxAttempts, err)
 			}
-			time.Sleep(time.Duration(attempt) * 2 * time.Second)
+			time.Sleep(exponentialBackoff(attempt)) // 指数退避: 1s, 2s, 4s, max 60s
 		}
 	}
-	return nil, fmt.Errorf("reconnect failed after %d attempts: %w", maxAttempts, lastErr)
+	return nil, fmt.Errorf("reconnect failed: %w", lastErr)
+}
+
+// exponentialBackoff 计算指数退避时间，上限 60 秒
+func exponentialBackoff(attempt int) time.Duration {
+	backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+	if backoff > 60*time.Second {
+		backoff = 60 * time.Second
+	}
+	return backoff
 }
 
 // buildSSHConfig 构建 SSH 客户端配置

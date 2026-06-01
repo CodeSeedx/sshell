@@ -18,6 +18,10 @@ func runMultiHost(a args) error {
 		return fmt.Errorf("no hosts specified")
 	}
 
+	if a.cmd == "" {
+		return fmt.Errorf("multi-host mode requires a command (e.g., sshell -u user host1,host2 \"df -h\")")
+	}
+
 	if a.verbose {
 		fmt.Fprintf(os.Stderr, "[sshell] Executing on %d hosts: %s\n", len(a.hosts), strings.Join(a.hosts, ", "))
 	}
@@ -95,7 +99,7 @@ func runOnHost(a args, host string) error {
 	}
 
 	// 多主机模式只需要执行命令，不需要 session（由 runRemoteCommandIO 自己创建）
-	conn, err := connectClient(hostArgs)
+	conn, err := connectClientWithRetry(hostArgs)
 	if err != nil {
 		return fmt.Errorf("connect: %w", err)
 	}
@@ -153,6 +157,11 @@ func prefixLines(prefix string, r io.Reader, w io.Writer) {
 		line := scanner.Text()
 		outputMu.Lock()
 		fmt.Fprintf(w, "%s%s\n", prefix, line)
+		outputMu.Unlock()
+	}
+	if err := scanner.Err(); err != nil {
+		outputMu.Lock()
+		fmt.Fprintf(os.Stderr, "%s[read error: %v]\n", prefix, err)
 		outputMu.Unlock()
 	}
 }

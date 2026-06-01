@@ -94,7 +94,7 @@ func remoteEdit(client *ssh.Client, remotePath string, verbose bool) error {
 		fmt.Fprintf(os.Stderr, "[sshell] Opening %s with %s...\n", localPath, editor)
 	}
 
-	editCmd := exec.Command(editor, localPath)
+	editCmd := buildEditCmd(editor, localPath)
 	editCmd.Stdin = os.Stdin
 	editCmd.Stdout = os.Stdout
 	editCmd.Stderr = os.Stderr
@@ -194,17 +194,23 @@ func sftpPutClient(sftpClient *sftp.Client, localPath, remotePath string, verbos
 	if err != nil {
 		return fmt.Errorf("open remote file: %w", err)
 	}
-	defer outFile.Close()
 
+	buf := make([]byte, 32*1024)
+	if _, err := io.CopyBuffer(outFile, f, buf); err != nil {
+		outFile.Close()
+		return fmt.Errorf("copy: %w", err)
+	}
+
+	// 关闭文件，捕获可能的 flush 错误
+	if err := outFile.Close(); err != nil {
+		return fmt.Errorf("close remote file: %w", err)
+	}
+
+	// 写入完成后再设置权限
 	if err := sftpClient.Chmod(remotePath, stat.Mode().Perm()); err != nil {
 		if verbose {
 			fmt.Fprintf(os.Stderr, "[sshell] Warning: could not set permissions: %v\n", err)
 		}
-	}
-
-	buf := make([]byte, 32*1024)
-	if _, err := io.CopyBuffer(outFile, f, buf); err != nil {
-		return fmt.Errorf("copy: %w", err)
 	}
 
 	return nil
@@ -213,6 +219,7 @@ func sftpPutClient(sftpClient *sftp.Client, localPath, remotePath string, verbos
 // getEditor 获取编辑器，优先级: EDITOR > VISUAL > vim > vi > nano > notepad
 func getEditor() string {
 	if editor := os.Getenv("EDITOR"); editor != "" {
+		// 返回第一个词作为编辑器命令（忽略参数，由调用者处理）
 		return editor
 	}
 	if editor := os.Getenv("VISUAL"); editor != "" {
@@ -228,6 +235,12 @@ func getEditor() string {
 
 	// 兜底
 	return "vi"
+}
+
+// buildEditCmd 构建编辑器命令，支持 EDITOR 含空格和参数（如 "code --wait"）
+// 使用 sh -c 执行，正确处理 EDITOR 值中的引号和特殊字符
+func buildEditCmd(editor, filePath string) *exec.Cmd {
+	return exec.Command("sh", "-c", editor+` "$1"`, "--", filePath)
 }
 
 // fileSHA256 计算文件的 SHA256 哈希

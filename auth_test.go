@@ -528,26 +528,27 @@ func Test_sshAgentAuth_NoSocket(t *testing.T) {
 }
 
 func Test_findAuth_CleanupOnError(t *testing.T) {
-	// 测试错误路径中的cleanup调用
+	// 测试：无效密钥文件内容应该报错（文件存在但内容无效）
+	tmpDir := t.TempDir()
+	badKeyPath := filepath.Join(tmpDir, "bad_key")
+	if err := os.WriteFile(badKeyPath, []byte("not a real key"), 0600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
 	a := args{
-		auth: "/nonexistent/key",
+		auth: badKeyPath,
 		host: "testhost",
 		user: "testuser",
 	}
-	
-	// 模拟无SSH_AUTH_SOCK环境
-	origSocket := os.Getenv("SSH_AUTH_SOCK")
-	os.Unsetenv("SSH_AUTH_SOCK")
-	defer os.Setenv("SSH_AUTH_SOCK", origSocket)
-	
+
 	_, cleanup, err := findAuth(a)
 	if cleanup != nil {
 		defer cleanup()
 	}
-	
-	// 应该返回错误，因为密钥文件不存在
+
+	// 应该返回错误，因为密钥文件内容无效
 	if err == nil {
-		t.Error("Expected error for non-existent key file")
+		t.Error("Expected error for invalid key file content")
 	}
 }
 

@@ -35,10 +35,10 @@ _sshell() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="-p -u -a -k -v -V -C -J -L -R -D --put --get --sftp --log --save --delete --list --no-agent --reconnect --reconnect-max --help --version"
+    opts="-p -u -a -k -v -V -A -C -J -L -R -D --put --get --sftp --edit --log --save --delete --list --no-agent --agent-forward --insecure-host-key --reconnect --reconnect-max --help --version"
 
     case "${prev}" in
-        -u|-a|-p|-k|-J|-L|-R|-D|--put|--get|--log|--save|--delete|--reconnect-max)
+        -u|-a|-p|-k|-J|-L|-R|-D|--put|--get|--edit|--log|--save|--delete|--reconnect-max)
             return 0
             ;;
     esac
@@ -79,6 +79,7 @@ _sshell() {
         '-v[Verbose output]'
         '-V[Show version]'
         '-C[Enable compression]'
+        '-A[Enable SSH Agent forwarding]'
         '-J[ProxyJump]:jump host'
         '-L[Local port forwarding]:spec'
         '-R[Remote port forwarding]:spec'
@@ -86,11 +87,14 @@ _sshell() {
         '--put[Upload file]:local:remote'
         '--get[Download file]:remote:local'
         '--sftp[Use SFTP protocol for file transfers]'
+        '--edit[Edit remote file with local editor]:path'
         '--log[Log session]:file'
         '--save[Save bookmark]:name'
         '--list[List bookmarks]'
         '--delete[Delete bookmark]:name'
         '--no-agent[Disable SSH Agent]'
+        '--agent-forward[Enable SSH Agent forwarding]'
+        '--insecure-host-key[Skip host key verification]'
         '--reconnect[Auto-reconnect]'
         '--reconnect-max[Max reconnects]:count'
         '--help[Show help]'
@@ -133,6 +137,7 @@ complete -c sshell -s k -d 'Keep-alive interval' -r
 complete -c sshell -s v -d 'Verbose output'
 complete -c sshell -s V -d 'Show version'
 complete -c sshell -s C -d 'Enable compression'
+complete -c sshell -s A -d 'Enable SSH Agent forwarding'
 complete -c sshell -s J -d 'ProxyJump host' -r
 complete -c sshell -s L -d 'Local port forwarding' -r
 complete -c sshell -s R -d 'Remote port forwarding' -r
@@ -140,11 +145,14 @@ complete -c sshell -s D -d 'SOCKS5 proxy port' -r
 complete -c sshell -l put -d 'Upload file (local:remote)' -r
 complete -c sshell -l get -d 'Download file (remote:local)' -r
 complete -c sshell -l sftp -d 'Use SFTP protocol for file transfers'
+complete -c sshell -l edit -d 'Edit remote file with local editor' -r
 complete -c sshell -l log -d 'Log session to file' -r
 complete -c sshell -l save -d 'Save bookmark' -r
 complete -c sshell -l list -d 'List bookmarks'
 complete -c sshell -l delete -d 'Delete bookmark' -r
 complete -c sshell -l no-agent -d 'Disable SSH Agent'
+complete -c sshell -l agent-forward -d 'Enable SSH Agent forwarding'
+complete -c sshell -l insecure-host-key -d 'Skip host key verification'
 complete -c sshell -l reconnect -d 'Auto-reconnect'
 complete -c sshell -l reconnect-max -d 'Max reconnect attempts' -r
 complete -c sshell -l help -d 'Show help'

@@ -63,5 +63,6 @@ func runRemoteCommandIO(session *ssh.Session, a args, stdin io.Reader, stdout, s
 		return exitErr.ExitStatus(), nil
 	}
 
-	return 1, fmt.Errorf("run: %w", err)
+	// 与 runRemoteCommand 保持一致：未知错误返回 -1
+	return -1, fmt.Errorf("run: %w", err)
 }

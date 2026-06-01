@@ -192,6 +192,7 @@ func startRemoteForward(client *ssh.Client, spec string, verbose bool) error {
 		// 等待client关闭
 		client.Wait()
 		remoteForwardMappings.Delete(remotePort)
+		remoteForwardHandlers.Delete(client)
 		if verbose {
 			fmt.Fprintf(os.Stderr, "[sshell] Remote forward: cleaned up mapping for port %d\n", remotePort)
 		}
@@ -547,7 +548,7 @@ func (c *channelConn) Write(data []byte) (int, error) {
 	c.mu.Lock()
 	if c.closed {
 		c.mu.Unlock()
-		return 0, fmt.Errorf("connection closed")
+		return 0, net.ErrClosed
 	}
 	c.mu.Unlock()
 	return c.Channel.Write(data)
@@ -558,7 +559,7 @@ func (c *channelConn) Read(data []byte) (int, error) {
 	c.mu.Lock()
 	if c.closed {
 		c.mu.Unlock()
-		return 0, fmt.Errorf("connection closed")
+		return 0, net.ErrClosed
 	}
 	c.mu.Unlock()
 	return c.Channel.Read(data)
@@ -575,6 +576,9 @@ func (c *channelConn) Close() error {
 	if c.timer != nil {
 		c.timer.Stop()
 		c.timer = nil
+	}
+	if c.Channel == nil {
+		return nil
 	}
 	return c.Channel.Close()
 }

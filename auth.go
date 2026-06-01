@@ -60,11 +60,18 @@ func findAuth(a args) ([]ssh.AuthMethod, func(), error) {
 			methods = append(methods, keyMethods...)
 			return methods, combinedCleanup, nil
 		}
-		// 当作密码使用
-		if a.verbose {
-			fmt.Fprintln(os.Stderr, "[sshell] Auth: password")
+		// 当作密码使用（优先从环境变量读取，避免 ps 泄露）
+		if envPw := os.Getenv("SSHELL_PASSWORD"); envPw != "" {
+			os.Unsetenv("SSHELL_PASSWORD") // 立即清除，防止泄露到子进程（如编辑器）
+			if a.verbose {
+				fmt.Fprintln(os.Stderr, "[sshell] Auth: password (from SSHELL_PASSWORD)")
+			}
+			methods = append(methods, ssh.Password(envPw))
+		} else {
+			// -a 值不是文件路径，直接当密码（向后兼容，但警告）
+			fmt.Fprintln(os.Stderr, "[sshell] Warning: password via -a is visible in process list. Use SSHELL_PASSWORD env or key file instead.")
+			methods = append(methods, ssh.Password(a.auth))
 		}
-		methods = append(methods, ssh.Password(a.auth))
 		return methods, combinedCleanup, nil
 	}
 
@@ -137,6 +144,7 @@ func autoDetectKeys(verbose bool) ([]ssh.AuthMethod, error) {
 
 	var methods []ssh.AuthMethod
 	var promptOnce bool // 整个探测过程只提示一次 passphrase
+	var savedPassphrase string
 	for _, name := range []string{"id_ed25519", "id_rsa", "id_ecdsa"} {
 		p := filepath.Join(home, ".ssh", name)
 		key, err := os.ReadFile(p)
@@ -146,20 +154,23 @@ func autoDetectKeys(verbose bool) ([]ssh.AuthMethod, error) {
 		signer, err := ssh.ParsePrivateKey(key)
 		if err != nil {
 			// 可能是加密密钥，尝试提示 passphrase
+			var pw string
 			if !promptOnce {
-				pw, perr := readPassword("Key passphrase: ")
+				var perr error
+				pw, perr = readPassword("Key passphrase: ")
 				if perr != nil {
 					promptOnce = true // 用户取消输入，不再提示
 					continue
 				}
-				signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(pw))
-				if err != nil {
-					continue // 密码错误，跳过此密钥，但不锁死后续密钥
-				}
-				promptOnce = true // 成功解密，后续密钥使用同一密码
+				savedPassphrase = pw
 			} else {
-				continue
+				pw = savedPassphrase
 			}
+			signer, err = ssh.ParsePrivateKeyWithPassphrase(key, []byte(pw))
+			if err != nil {
+				continue // 密码错误或已取消，跳过此密钥
+			}
+			promptOnce = true // 成功解密，后续密钥使用同一密码
 		}
 		if verbose {
 			fmt.Fprintf(os.Stderr, "[sshell] Auth: key (%s)\n", p)

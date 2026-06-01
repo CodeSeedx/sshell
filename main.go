@@ -74,6 +74,10 @@ func main() {
 			cliNoAgent := a.noAgent
 			cliReconnect := a.reconnect
 			cliReconnectMax := a.reconnectMax
+			cliInsecureHostKey := a.insecureHostKey
+			cliScpPut := a.scpPut
+			cliScpGet := a.scpGet
+			cliEditFile := a.editFile
 
 			a = bk
 
@@ -110,6 +114,18 @@ func main() {
 			}
 			if cliReconnectMax > 0 {
 				a.reconnectMax = cliReconnectMax
+			}
+			if cliInsecureHostKey {
+				a.insecureHostKey = true
+			}
+			if cliScpPut != "" {
+				a.scpPut = cliScpPut
+			}
+			if cliScpGet != "" {
+				a.scpGet = cliScpGet
+			}
+			if cliEditFile != "" {
+				a.editFile = cliEditFile
 			}
 
 			// 重新应用默认值
@@ -286,7 +302,7 @@ func parseSCPPath(spec string) (string, string) {
 	for i := 0; i < len(spec); i++ {
 		if spec[i] == ':' {
 			// 跳过 Windows 盘符：单个字母后跟 :\ 或 :/（如 C:\Users）
-			if i == 1 && spec[0] >= 'A' && spec[0] <= 'z' && i+1 < len(spec) && (spec[i+1] == '\\' || spec[i+1] == '/') {
+			if i == 1 && ((spec[0] >= 'A' && spec[0] <= 'Z') || (spec[0] >= 'a' && spec[0] <= 'z')) && i+1 < len(spec) && (spec[i+1] == '\\' || spec[i+1] == '/') {
 				continue
 			}
 			return spec[:i], spec[i+1:]
