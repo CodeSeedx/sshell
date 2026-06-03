@@ -100,6 +100,20 @@ func runOnHost(a args, host string) error {
 		if cfg.ServerAliveInterval > 0 && !hostArgs.cliAlive {
 			hostArgs.alive = uint32(cfg.ServerAliveInterval)
 		}
+		if cfg.Compression {
+			hostArgs.compress = true
+		}
+		// 应用 SSH config 中的 ProxyJump（仅当命令行未指定时）
+		if cfg.ProxyJump != "" && hostArgs.proxyJump == "" {
+			hostArgs.proxyJump = cfg.ProxyJump
+			hostArgs.proxyJumps = parseJumpHosts(cfg.ProxyJump)
+			if len(hostArgs.proxyJumps) == 1 {
+				jh := hostArgs.proxyJumps[0]
+				hostArgs.proxyJump = jh.Host
+				hostArgs.proxyJumpPort = jh.Port
+				hostArgs.proxyJumpUser = jh.User
+			}
+		}
 	}
 
 	// 多主机模式只需要执行命令，不需要 session（由 runRemoteCommandIO 自己创建）
