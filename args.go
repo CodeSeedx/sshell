@@ -203,6 +203,23 @@ func parseArgsFrom(argv []string) (args, error) {
 
 		// 处理 -- 长选项
 		if strings.HasPrefix(arg, "--") {
+			// POSIX: -- 终止选项解析，后续全部作为位置参数
+			if arg == "--" {
+				i++ // 跳过 --
+				if a.host == "" && i < len(argv) {
+					a.host = argv[i]
+					i++
+				}
+				if i < len(argv) {
+					remaining := argv[i:]
+					if a.cmd != "" {
+						a.cmd += " "
+					}
+					a.cmd += strings.Join(remaining, " ")
+				}
+				break
+			}
+
 			longArg := arg[2:]
 			// 处理 --key=value 格式
 			if idx := strings.Index(longArg, "="); idx >= 0 {
