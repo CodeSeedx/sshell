@@ -76,14 +76,14 @@ func dialSSH(a args, addr string) (*ssh.Client, error) {
 	}
 	defer authCleanup()
 
-	// 主机密钥校验
-	hostKeyCallback, err := loadKnownHosts(a.verbose)
-	if err != nil {
-		if a.insecureHostKey {
-			fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
-			fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check. Connections are vulnerable to MITM attacks.")
-			hostKeyCallback = ssh.InsecureIgnoreHostKey()
-		} else {
+	// 主机密钥校验：--insecure-host-key 优先，直接跳过校验
+	var hostKeyCallback ssh.HostKeyCallback
+	if a.insecureHostKey {
+		fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check. Connections are vulnerable to MITM attacks.")
+		hostKeyCallback = ssh.InsecureIgnoreHostKey()
+	} else {
+		hostKeyCallback, err = loadKnownHosts(a.verbose)
+		if err != nil {
 			conn.Close()
 			return nil, fmt.Errorf("host key verification failed: %w (use --insecure-host-key to override)", err)
 		}
@@ -262,13 +262,14 @@ func dialSSHVia(via *ssh.Client, a args, destAddr string) (*ssh.Client, error) {
 	}
 	defer authCleanup()
 
-	hostKeyCallback, err := loadKnownHosts(a.verbose)
-	if err != nil {
-		if a.insecureHostKey {
-			fmt.Fprintf(os.Stderr, "[sshell] Warning: %v\n", err)
-			fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check.")
-			hostKeyCallback = ssh.InsecureIgnoreHostKey()
-		} else {
+	// 主机密钥校验：--insecure-host-key 优先，直接跳过校验
+	var hostKeyCallback ssh.HostKeyCallback
+	if a.insecureHostKey {
+		fmt.Fprintln(os.Stderr, "[sshell] WARNING: Using INSECURE host key check.")
+		hostKeyCallback = ssh.InsecureIgnoreHostKey()
+	} else {
+		hostKeyCallback, err = loadKnownHosts(a.verbose)
+		if err != nil {
 			conn.Close()
 			return nil, fmt.Errorf("host key verification failed: %w (use --insecure-host-key to override)", err)
 		}
