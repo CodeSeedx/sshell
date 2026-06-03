@@ -85,6 +85,10 @@ func main() {
 			cliUser := a.cliUser
 			cliAuth := a.cliAuth
 			cliAlive := a.cliAlive
+			cliProxyJump := a.proxyJump
+			cliProxyJumpPort := a.proxyJumpPort
+			cliProxyJumpUser := a.proxyJumpUser
+			cliProxyJumps := a.proxyJumps
 			// 保存 CLI 显式设置的值（用于在书签值之上恢复）
 			cliPortVal := a.port
 			cliUserVal := a.user
@@ -141,6 +145,13 @@ func main() {
 			}
 			if cliCmd != "" {
 				a.cmd = cliCmd
+			}
+			// 恢复 CLI ProxyJump 设置（-J 优先于书签值）
+			if cliProxyJump != "" {
+				a.proxyJump = cliProxyJump
+				a.proxyJumpPort = cliProxyJumpPort
+				a.proxyJumpUser = cliProxyJumpUser
+				a.proxyJumps = cliProxyJumps
 			}
 			// 恢复 CLI 显式设置的参数值和标志位
 			if cliPort {
