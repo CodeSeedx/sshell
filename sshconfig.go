@@ -243,7 +243,10 @@ func parseSSHConfigDepthCount(path string, depth int, totalFiles *int) []sshHost
 	}
 
 	if err := scanner.Err(); err != nil {
-		return nil
+		// I/O error during scanning — return partial results rather than discarding
+		// all successfully parsed blocks. This matches OpenSSH behavior of best-effort
+		// config parsing.
+		return blocks
 	}
 
 	return blocks
