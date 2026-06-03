@@ -121,6 +121,17 @@ func runOnHost(a args, host string) error {
 	}
 	defer session.Close()
 
+	// Agent Forwarding（与单主机模式 runRemoteCommand 保持一致）
+	if hostArgs.agentForward {
+		af, afCleanup, err := setupAgentForwarding(conn.client, session, a.verbose)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "[sshell] [%s] Agent forwarding failed: %v\n", host, err)
+		} else {
+			defer afCleanup()
+			_ = af
+		}
+	}
+
 	stdout, err := session.StdoutPipe()
 	if err != nil {
 		return fmt.Errorf("stdout pipe: %w", err)
