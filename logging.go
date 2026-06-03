@@ -54,18 +54,22 @@ type safeMultiWriter struct {
 	writers []io.Writer
 }
 
-func (m *safeMultiWriter) Write(p []byte) (n int, err error) {
+func (m *safeMultiWriter) Write(p []byte) (int, error) {
+	var primaryN int
+	var primaryErr error
 	for i, w := range m.writers {
-		n, err = w.Write(p)
-		if err != nil {
-			// 主 writer（第一个）失败则返回错误
-			if i == 0 {
+		n, err := w.Write(p)
+		if i == 0 {
+			primaryN = n
+			primaryErr = err
+			if err != nil {
 				return n, err
 			}
+		} else if err != nil {
 			// 辅助 writer 失败，忽略错误，继续写入其他 writer
 		}
 	}
-	return len(p), nil
+	return primaryN, primaryErr
 }
 
 // Close 关闭日志文件

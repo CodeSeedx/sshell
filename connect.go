@@ -495,18 +495,25 @@ func connectClientWithRetry(a args) (*sshConn, error) {
 	}
 
 	var lastErr error
+	var attempts []error // 记录所有尝试的错误（与 connectWithRetry 保持一致）
 	for attempt := 1; attempt <= maxAttempts; attempt++ {
 		conn, err := connectClient(a)
 		if err == nil {
 			return conn, nil
 		}
 		lastErr = err
+		attempts = append(attempts, err)
 		if attempt < maxAttempts {
 			if a.verbose {
 				fmt.Fprintf(os.Stderr, "[sshell] Reconnect attempt %d/%d after error: %v\n", attempt, maxAttempts, err)
 			}
 			time.Sleep(exponentialBackoff(attempt)) // 指数退避: 1s, 2s, 4s, max 60s
 		}
+	}
+	
+	// 返回包含所有尝试错误的详细信息（与 connectWithRetry 格式一致）
+	if len(attempts) > 1 {
+		return nil, fmt.Errorf("reconnect failed after %d attempts, last error: %w", len(attempts), lastErr)
 	}
 	return nil, fmt.Errorf("reconnect failed: %w", lastErr)
 }
