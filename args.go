@@ -98,7 +98,8 @@ func parseArgsVerbose() (args, error) {
 	applyConfig(&a, c)
 	a = finalizeArgs(a)
 	// 应用配置后，重新检查必填参数
-	if a.host == "" && !a.list {
+	// --list 和 --delete 不需要 host
+	if a.host == "" && !a.list && a.delete == "" {
 		return a, fmt.Errorf("Usage: sshell -u <user> <host> [options] [command]")
 	}
 	if a.host != "" && a.user == "" {
@@ -117,7 +118,8 @@ func parseArgsWithConfig(argv []string) (args, error) {
 	applyConfig(&a, c)
 	a = finalizeArgs(a)
 	// 应用配置后，重新检查必填参数
-	if a.host == "" && !a.list {
+	// --list 和 --delete 不需要 host
+	if a.host == "" && !a.list && a.delete == "" {
 		return a, fmt.Errorf("Usage: sshell -u <user> <host> [options] [command]")
 	}
 	if a.host != "" && a.user == "" {
