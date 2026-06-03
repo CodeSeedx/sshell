@@ -80,6 +80,7 @@ func main() {
 			cliScpPut := a.scpPut
 			cliScpGet := a.scpGet
 			cliEditFile := a.editFile
+			cliCmd := a.cmd
 			cliPort := a.cliPort
 			cliUser := a.cliUser
 			cliAuth := a.cliAuth
@@ -137,6 +138,9 @@ func main() {
 			}
 			if cliEditFile != "" {
 				a.editFile = cliEditFile
+			}
+			if cliCmd != "" {
+				a.cmd = cliCmd
 			}
 			// 恢复 CLI 显式设置的参数值和标志位
 			if cliPort {
