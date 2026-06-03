@@ -15,6 +15,7 @@ import (
 
 	"crypto/x509"
 	"strings"
+	"sync"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
@@ -25,11 +26,12 @@ import (
 
 // testSSHServer 表示一个用于测试的内存 SSH 服务器
 type testSSHServer struct {
-	listener net.Listener
-	config   *ssh.ServerConfig
-	addr     string
-	stderr   bytes.Buffer
-	cancel   context.CancelFunc
+	listener  net.Listener
+	config    *ssh.ServerConfig
+	addr      string
+	stderr    bytes.Buffer
+	stderrMu  sync.Mutex // 保护 stderr 并发写入
+	cancel    context.CancelFunc
 }
 
 // startTestSSHServer 启动一个测试用 SSH 服务器
@@ -111,7 +113,9 @@ func startTestSSHServer(t *testing.T, password string, authorizedKeys []ssh.Publ
 func (s *testSSHServer) handleConn(ctx context.Context, netConn net.Conn, echo bool) {
 	sshConn, chans, reqs, err := ssh.NewServerConn(netConn, s.config)
 	if err != nil {
+		s.stderrMu.Lock()
 		fmt.Fprintf(&s.stderr, "SSH 握手失败: %v\n", err)
+		s.stderrMu.Unlock()
 		netConn.Close()
 		return
 	}
