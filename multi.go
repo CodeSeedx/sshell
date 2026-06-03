@@ -97,6 +97,9 @@ func runOnHost(a args, host string) error {
 		if cfg.IdentityFile != "" && !hostArgs.cliAuth {
 			hostArgs.auth = cfg.IdentityFile
 		}
+		if cfg.ServerAliveInterval > 0 && !hostArgs.cliAlive {
+			hostArgs.alive = uint32(cfg.ServerAliveInterval)
+		}
 	}
 
 	// 多主机模式只需要执行命令，不需要 session（由 runRemoteCommandIO 自己创建）

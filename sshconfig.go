@@ -289,7 +289,8 @@ func matchGlob(pattern, s string) bool {
 }
 
 // replaceTokens 替换 IdentityFile 中的 OpenSSH token
-// 支持: %h (hostname), %l (local hostname), %u (local user), %r (remote user), %p (port), %% (literal %)
+// 支持: %h (hostname), %l (local hostname), %% (literal %)
+// 注意: %u/%r/%p 暂未实现，需要扩展函数签名传递 remoteuser 和 port 参数
 func replaceTokens(path, hostname, localuser string) string {
 	// 先替换 %% 为占位符，再替换 %h/%l，最后还原字面 %
 	// 避免 %%h 被错误替换为 %hostname
