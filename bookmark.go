@@ -19,6 +19,7 @@ type bookmark struct {
 	ProxyJumpUser     string     `json:"proxy_jump_user,omitempty"`
 	ProxyJumps        []jumpHost `json:"proxy_jumps,omitempty"`
 	Compress          bool       `json:"compress,omitempty"`
+	AgentForward      bool       `json:"agent_forward,omitempty"`
 	Cmd               string     `json:"cmd,omitempty"`
 	InsecureHostKey   bool       `json:"insecure_host_key,omitempty"`
 }
@@ -115,6 +116,7 @@ func argsToBookmark(a args) bookmark {
 		ProxyJumpUser:   a.proxyJumpUser,
 		ProxyJumps:      a.proxyJumps,
 		Compress:        a.compress,
+		AgentForward:    a.agentForward,
 		Cmd:             a.cmd,
 		InsecureHostKey: a.insecureHostKey,
 	}
@@ -132,6 +134,7 @@ func bookmarkToArgs(b bookmark) args {
 		proxyJumpUser:   b.ProxyJumpUser,
 		proxyJumps:      b.ProxyJumps,
 		compress:        b.Compress,
+		agentForward:    b.AgentForward,
 		cmd:             b.Cmd,
 		insecureHostKey: b.InsecureHostKey,
 	}
